@@ -7,19 +7,23 @@ public enum CKCloudStoreError: Error {
     case serverRecordChanged
     case noAccount
     case tokenExpired
+    case userDeletedZone
     case quotaExceeded
 }
 
-extension CKCloudStoreError {
-    init(error: Error) {
+public extension CKCloudStoreError {
+
+    init(_ error: Error) {
         guard let error = error as? CKError else {
             self = .generic
             return
         }
         if error.containsPartialErrors(with: .changeTokenExpired) {
             self = .tokenExpired
-        } else if error.code == .notAuthenticated {
+        } else if error.code == .notAuthenticated || error.containsPartialErrors(with: .notAuthenticated) {
             self = .noAccount
+        } else if error.containsPartialErrors(with: .userDeletedZone) {
+            self = .userDeletedZone
         } else if error.containsPartialErrors(with: .quotaExceeded) {
             self = .quotaExceeded
         } else if error.containsPartialErrors(with: .unknownItem)
@@ -31,9 +35,13 @@ extension CKCloudStoreError {
     }
 }
 
-private extension CKError {
+extension CKError {
     func partialErrors() -> [CKError] {
         return (partialErrorsByItemID?.values).flatMap({ Array($0) }) as? [CKError] ?? []
+    }
+
+    func hasError(with code: CKError.Code) -> Bool {
+        code == self.code
     }
 
     func containsPartialErrors(with code: CKError.Code) -> Bool {
