@@ -34,7 +34,7 @@ public class CKAccountStatusMonitor {
         self.container = container
         observer = NotificationCenter.default.addObserver(
             forName: .CKAccountChanged,
-            object: CKContainer.default(),
+            object: container,
             queue: .main
         ) { [weak self] _ in
             self?.refreshStatus()
